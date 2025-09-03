@@ -10,10 +10,12 @@ import ArticleListPage from './pages/ArticlesListPage';
 import ArticlePage from './pages/ArticlePage';
 import NavBar from './NavBar';
 import Layout from './Layout';
+import NotFoundPage from './pages/NotFoundPage';
 
 const routes = [{
   path: '/',
   element: <Layout />,
+  errorElement: <NotFoundPage />, // will render on page any time an error occurs
   children: [
     {
       path: '/',
