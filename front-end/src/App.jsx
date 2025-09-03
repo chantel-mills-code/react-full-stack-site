@@ -8,7 +8,6 @@ import HomePage from './pages/HomePage'
 import AboutPage from './pages/AboutPage';
 import ArticleListPage from './pages/ArticlesListPage';
 import ArticlePage from './pages/ArticlePage';
-import NavBar from './NavBar';
 import Layout from './Layout';
 import NotFoundPage from './pages/NotFoundPage';
 
