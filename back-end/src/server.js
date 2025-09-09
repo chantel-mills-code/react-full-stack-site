@@ -2,9 +2,9 @@ import express from 'express';
 
 // dummy db
 const article_info = [
-    { name: 'learn-node', upvotes: 0 },
-    { name: 'learn-react', upvotes: 0 },
-    { name: 'mongodb', upvotes: 0 }
+    { name: 'learn-node', upvotes: 0, comments: [] },
+    { name: 'learn-react', upvotes: 0, comments: [] },
+    { name: 'mongodb', upvotes: 0, comments: [] }
 ]
 
 const app = express();
@@ -15,7 +15,22 @@ app.post('/api/articles/:name/upvote', function(req, res) {
     const article = article_info.find(a => a.name === req.params.name);
     article.upvotes += 1;
 
-    res.send('Success! The article ' + req.params.name + ' now has ' + article.upvotes + ' upvotes!');
+    // res.send('Success! The article ' + req.params.name + ' now has ' + article.upvotes + ' upvotes!');
+    res.json(article);
+});
+
+app.post('/api/articles/:name/comments', (req, res) => {
+    const name = req.params.name;
+    const { postedBy, text } = req.body; // will look for the fields postedBy and text in the request body
+
+    const article = article_info.find(a => a.name === name);
+
+    article.comments.push({
+        postedBy,
+        text,
+    });
+
+    res.json(article); // sends back the updated article as a response
 });
 
 ////// examples for routing in express server
