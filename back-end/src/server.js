@@ -1,4 +1,5 @@
 import express from 'express';
+import { MongoClient, ServerApiVersion } from 'mongodb';
 
 // dummy db
 const article_info = [
@@ -10,6 +11,30 @@ const article_info = [
 const app = express();
 
 app.use(express.json()); // if app sees a request, it should add it to request.body
+
+// will be able to load data for a specific article
+app.get('/api/articles/:name', async (req, res) => {
+    const { name } = req.params;
+    
+    // connect to mongodb
+    const uri = 'mongodb://127.0.0.1:27017';
+
+    const client = new MongoClient(uri, {
+        serverApi: {
+            version: ServerApiVersion.v1,
+            strict: true,
+            deprecationErrors: true,
+        }
+    });
+
+    await client.connect();
+
+    const db = client.db('full-stack-react-db');
+
+    const article = await db.collection('articles').findOne({name});
+
+    res.json(article);
+});
 
 app.post('/api/articles/:name/upvote', function(req, res) {
     const article = article_info.find(a => a.name === req.params.name);
