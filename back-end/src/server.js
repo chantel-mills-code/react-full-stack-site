@@ -1,13 +1,6 @@
 import express from 'express';
 import { MongoClient, ReturnDocument, ServerApiVersion } from 'mongodb';
 
-// dummy db
-const article_info = [
-    { name: 'learn-node', upvotes: 0, comments: [] },
-    { name: 'learn-react', upvotes: 0, comments: [] },
-    { name: 'mongodb', upvotes: 0, comments: [] }
-]
-
 const app = express();
 
 app.use(express.json()); // if app sees a request, it should add it to request.body
@@ -52,18 +45,18 @@ app.post('/api/articles/:name/upvote', async function(req, res) {
     res.json(updatedArticle);
 });
 
-app.post('/api/articles/:name/comments', (req, res) => {
+app.post('/api/articles/:name/comments', async (req, res) => {
     const name = req.params.name;
     const { postedBy, text } = req.body; // will look for the fields postedBy and text in the request body
+    const newComment = {postedBy, text}
 
-    const article = article_info.find(a => a.name === name);
-
-    article.comments.push({
-        postedBy,
-        text,
+    const updatedArticle = await db.collection('articles').findOneAndUpdate({name}, {
+        $push: { comments: newComment } // add comment to comments array
+    }, {
+        returnDocument: "after",
     });
 
-    res.json(article); // sends back the updated article as a response
+    res.json(updatedArticle);
 });
 
 async function start() {
