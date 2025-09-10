@@ -1,51 +1,70 @@
 import express from 'express';
-
-// dummy db
-const article_info = [
-    { name: 'learn-node', upvotes: 0, comments: [] },
-    { name: 'learn-react', upvotes: 0, comments: [] },
-    { name: 'mongodb', upvotes: 0, comments: [] }
-]
+import { MongoClient, ReturnDocument, ServerApiVersion } from 'mongodb';
 
 const app = express();
 
 app.use(express.json()); // if app sees a request, it should add it to request.body
 
-app.post('/api/articles/:name/upvote', function(req, res) {
-    const article = article_info.find(a => a.name === req.params.name);
-    article.upvotes += 1;
+let db;
 
-    // res.send('Success! The article ' + req.params.name + ' now has ' + article.upvotes + ' upvotes!');
+async function connectToDB() {
+    // connect to mongodb
+    const uri = 'mongodb://127.0.0.1:27017';
+
+    const client = new MongoClient(uri, {
+        serverApi: {
+            version: ServerApiVersion.v1,
+            strict: true,
+            deprecationErrors: true,
+        }
+    });
+
+    await client.connect();
+
+    db = client.db('full-stack-react-db');
+}
+
+// will be able to load data for a specific article
+app.get('/api/articles/:name', async (req, res) => {
+    const { name } = req.params;
+
+    const article = await db.collection('articles').findOne({name});
+
     res.json(article);
 });
 
-app.post('/api/articles/:name/comments', (req, res) => {
-    const name = req.params.name;
-    const { postedBy, text } = req.body; // will look for the fields postedBy and text in the request body
+app.post('/api/articles/:name/upvote', async function(req, res) {
+    const { name } = req.params;
 
-    const article = article_info.find(a => a.name === name);
-
-    article.comments.push({
-        postedBy,
-        text,
+    const updatedArticle = await db.collection('articles').findOneAndUpdate({ name }, {
+        $inc:  { upvotes: 1 } // $inc ..=> increments the property in table by designated amount to increment by
+    }, {
+        returnDocument: "after",
     });
 
-    res.json(article); // sends back the updated article as a response
+    res.json(updatedArticle);
 });
 
-////// examples for routing in express server
-// app.get('/hello', function(req, res) {
-//     res.send('Hello from a GET endpoint!');
-// });
+app.post('/api/articles/:name/comments', async (req, res) => {
+    const name = req.params.name;
+    const { postedBy, text } = req.body; // will look for the fields postedBy and text in the request body
+    const newComment = {postedBy, text}
 
-// app.get('/hello/:name', function(req, res) {
-//     res.send('Hello, ' + req.params.name);
-// })
+    const updatedArticle = await db.collection('articles').findOneAndUpdate({name}, {
+        $push: { comments: newComment } // add comment to comments array
+    }, {
+        returnDocument: "after",
+    });
 
-// app.post('/hello', function(req, res) {
-//     res.send('Hello, ' + req.body.name + ' from a POST endpoint')
-// });
-
-app.listen(8000, function() {
-    console.log("Server is listening on port 8000");
+    res.json(updatedArticle);
 });
+
+async function start() {
+    await connectToDB();
+    
+    app.listen(8000, function() {
+        console.log("Server is listening on port 8000");
+    });
+}
+
+start();
