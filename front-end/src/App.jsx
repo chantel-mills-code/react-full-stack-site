@@ -33,7 +33,7 @@ const routes = [{
       path: '/articles/:name',
       element: <ArticlePage />,
       loader: async function() {
-        const response = await axios.get('/api/article/learn-node');
+        const response = await axios.get('/api/articles/learn-node');
         const {upvotes, comments} = response.data;
         return { upvotes, comments };
       }
