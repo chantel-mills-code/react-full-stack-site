@@ -1,7 +1,8 @@
 import {
   createBrowserRouter,
   RouterProvider
-} from 'react-router-dom'
+} from 'react-router-dom';
+import axios from 'axios';
 
 import './App.css'
 import HomePage from './pages/HomePage'
@@ -30,7 +31,12 @@ const routes = [{
     },
     {
       path: '/articles/:name',
-      element: <ArticlePage />
+      element: <ArticlePage />,
+      loader: async function() {
+        const response = await axios.get('/api/article/learn-node');
+        const {upvotes, comments} = response.data;
+        return { upvotes, comments };
+      }
     }
   ]
 }];
