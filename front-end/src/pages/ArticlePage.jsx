@@ -3,13 +3,15 @@ import { useParams, useLoaderData } from "react-router-dom";
 import articles from '../article-content';
 import axios from 'axios';
 import CommentsList from "../CommentsList";
+import AddCommentForm from "../AddCommentForm";
 
 export default function ArticlePage() {
     const params = useParams();
     const name = params.name;
 
-    const {upvotes: initialUpvotes, comments} = useLoaderData();
+    const {upvotes: initialUpvotes, comments: initialComments} = useLoaderData();
     const [upvotes, setUpvotes] = useState(initialUpvotes);
+    const [comments, setComments] = useState(initialComments);
 
     const article = articles.find(a => a.name === name);
 
@@ -20,12 +22,23 @@ export default function ArticlePage() {
         setUpvotes(updatedArticleData.upvotes);
     }
 
+    async function onAddComment({ nameText, commentText }) {
+        const response = await axios.post('/api/articles/' + name + '/comments', {
+            postedBy: nameText,
+            text: commentText,
+        });
+
+        const updatedArticleData = response.data;
+        setComments(updatedArticleData.comments);
+    }
+
     return (
         <>
             <h1>{article.title}</h1>
             <button onClick={onUpvoteClicked}>Upvote</button>
             <p>This article has {upvotes} upvotes!</p>
             {article.content.map(p => <p key={p}>{p}</p>)}
+            <AddCommentForm onAddComment={onAddComment} />
             <CommentsList comments={comments}/>
         </>
     )
