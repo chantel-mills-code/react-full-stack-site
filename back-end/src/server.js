@@ -1,5 +1,15 @@
 import express from 'express';
 import { MongoClient, ReturnDocument, ServerApiVersion } from 'mongodb';
+import admin  from 'firebase-admin';
+import fs from 'fs';
+
+const credentials = JSON.parse(
+    fs.readFileSync('./credentials.json')
+);
+
+admin.initializeApp({
+  credential: admin.credential.cert(credentials)
+});
 
 const app = express();
 
@@ -33,16 +43,42 @@ app.get('/api/articles/:name', async (req, res) => {
     res.json(article);
 });
 
+// middleware callback; protect other endpoints/functionality from non logged-in users
+app.use(async function(req, res, next) {
+    const {authtoken} = req.headers;
+
+    if(authtoken) {
+        const user = await admin.auth().verifyIdToken(authtoken); // check and make sure it's valid and user is found
+        req.user = user;
+        next(); // only do this if there is a token
+    } else {
+        res.sendStatus(400);
+    }
+
+});
+
 app.post('/api/articles/:name/upvote', async function(req, res) {
     const { name } = req.params;
+    const {uid} = req.user;
 
-    const updatedArticle = await db.collection('articles').findOneAndUpdate({ name }, {
-        $inc:  { upvotes: 1 } // $inc ..=> increments the property in table by designated amount to increment by
-    }, {
-        returnDocument: "after",
-    });
+    const article = await db.collection('articles').findOne({ name });
 
-    res.json(updatedArticle);
+    const upvoteIds = article.upvoteIds || [];
+    const canUpvote = uid && !upvoteIds.includes(uid);
+
+    if (canUpvote) {
+        const updatedArticle = await db.collection('articles').findOneAndUpdate({ name }, {
+            $inc:  { upvotes: 1 }, // $inc ..=> increments the property in table by designated amount to increment by
+            $push: { upvoteIds: uid },
+        }, {
+            returnDocument: "after",
+        });
+
+        res.json(updatedArticle);
+    } else {
+        res.sendStatus(403);
+    }
+
 });
 
 app.post('/api/articles/:name/comments', async (req, res) => {
