@@ -50,11 +50,11 @@ app.use(async function(req, res, next) {
     if(authtoken) {
         const user = await admin.auth().verifyIdToken(authtoken); // check and make sure it's valid and user is found
         req.user = user;
+        next(); // only do this if there is a token
     } else {
         res.sendStatus(400);
     }
 
-    next();
 });
 
 app.post('/api/articles/:name/upvote', async function(req, res) {
@@ -64,7 +64,7 @@ app.post('/api/articles/:name/upvote', async function(req, res) {
     const article = await db.collection('articles').findOne({ name });
 
     const upvoteIds = article.upvoteIds || [];
-    const canUpvote = uid && !upvoteIds.include(uid);
+    const canUpvote = uid && !upvoteIds.includes(uid);
 
     if (canUpvote) {
         const updatedArticle = await db.collection('articles').findOneAndUpdate({ name }, {
