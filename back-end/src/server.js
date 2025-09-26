@@ -43,6 +43,20 @@ app.get('/api/articles/:name', async (req, res) => {
     res.json(article);
 });
 
+// middleware callback; protect other endpoints/functionality from non logged-in users
+app.use(async function(req, res, next) {
+    const {authtoken} = req.headers;
+
+    if(authtoken) {
+        const user = await admin.auth().verifyIdToken(authtoken); // check and make sure it's valid and user is found
+        req.user = user;
+    } else {
+        res.sendStatus(400);
+    }
+
+    next();
+});
+
 app.post('/api/articles/:name/upvote', async function(req, res) {
     const { name } = req.params;
 
