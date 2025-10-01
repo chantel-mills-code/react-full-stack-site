@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 credentials.json
+.env
+prod-env.yaml
